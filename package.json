@@ -1,0 +1,19 @@
+{
+  "name": "lemme-know",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A private MCP tool that texts you when your agent is ready.",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "node --env-file=.env.local scripts/dev.js",
+    "test": "node --test",
+    "smoke": "node --env-file=.env.local scripts/smoke.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "zod": "^4.6.7"
+  }
+}
