@@ -28,7 +28,7 @@ export function createHandler({ env = process.env, send = message => sendNotific
     const server = new McpServer({ name: 'lemme-know', version: '1.0.0' });
     server.registerTool('notify_agent_done', {
       title: 'Notify me by SMS',
-      description: `Send the owner an SMS you write explaining what finished or why you need attention. Call once at the end of the task, or before pausing for user input, when the user requested notifications. Use at most ${MAX_MESSAGE_LENGTH} plain English characters to stay within one SMS segment including the trial prefix. Cannot detect a crash or stop automatically. Do not retry an uncertain result without checking Twilio logs.`,
+      description: `Send a single SMS only after a long-running, substantial task has finished or become blocked, and the user has not replied for at least 60 seconds after that completion or blocker. Do not call immediately, on every chat turn, for short tasks, routine questions, progress updates, or urgent requests without the same waiting period. If the user replies during that minute, do not send. The host or agent must actually be able to observe the wait and lack of a reply; this server cannot monitor chat activity, schedule a later call, or detect crashes. If that cannot be verified, do not call. Write what finished or what is blocking progress, using at most ${MAX_MESSAGE_LENGTH} plain English characters for one SMS segment including the trial prefix. Send at most once per completion or blocker; do not retry uncertain delivery without checking Twilio logs.`,
       inputSchema: { message: messageSchema },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     }, async ({ message }) => {

@@ -15,9 +15,21 @@ The header value is a secret. On the setup machine, find `MCP_AUTH_TOKEN` in the
 
 Suggested instruction for Claude:
 
-> When you finish this task, or need my input before continuing, call `notify_agent_done` once before your final reply. Write a specific message explaining what finished or what you need, using at most 122 plain English characters. Do not send repeated notifications for the same pause.
+> Only after a long-running, substantial task finishes or becomes blocked, wait at least one minute. If I have not replied during that minute, call `notify_agent_done` once with a short explanation of the outcome or blocker, using at most 122 plain English characters. Do not text for short tasks, every chat turn, routine questions, progress updates, or immediate urgent requests. If I reply during the wait, do not text. Only call if you can actually observe the elapsed time and absence of a reply; otherwise skip the SMS.
 
-This is a tool the agent must call. It does not independently monitor the agent, detect crashes, or run after a forcibly terminated session.
+This is a tool the agent must call. It does not independently monitor the agent, detect crashes, or run after a forcibly terminated session. The one-minute inactivity policy is an agent instruction, not a server-side timer: the MCP server cannot read chat activity or wake an agent after its turn ends. A host without those timing and activity capabilities should skip the notification.
+
+## Connect local Codex
+
+Add the following to your user-level Codex configuration (`~/.codex/config.toml`), substituting your private MCP token:
+
+```toml
+[mcp_servers.lemme_know]
+url = "https://lemme-know.devreddy7.in/mcp"
+http_headers = { Authorization = "Bearer YOUR_MCP_AUTH_TOKEN" }
+```
+
+Keep that configuration private. Restart Codex or start a new session to load the server. This local MCP configuration uses bearer authentication directly; the hosted plugin form's OAuth/no-auth options are a separate connection path.
 
 ## Tool
 
