@@ -15,9 +15,13 @@ The header value is a secret. On the setup machine, find `MCP_AUTH_TOKEN` in the
 
 Suggested instruction for Claude:
 
-> Only after a long-running, substantial task finishes or becomes blocked, wait at least one minute. If I have not replied during that minute, call `notify_agent_done` once with a short explanation of the outcome or blocker, using at most 122 plain English characters. Do not text for short tasks, every chat turn, routine questions, progress updates, or immediate urgent requests. If I reply during the wait, do not text. Only call if you can actually observe the elapsed time and absence of a reply; otherwise skip the SMS.
+> For this task in this chat, I explicitly opt in to SMS notifications. Only after a long-running, substantial task finishes or becomes blocked, wait at least one minute. If I have not replied during that minute, call `notify_agent_done` once with a short explanation of the outcome or blocker, using at most 122 plain English characters. Do not text for short tasks, every chat turn, routine questions, progress updates, or immediate urgent requests. If I reply during the wait, do not text. Only call if you can actually observe the elapsed time and absence of a reply; otherwise skip the SMS. This permission does not apply to other chats or tasks.
+
+**Default: do not send SMS.** The user must explicitly request SMS notifications for the task in the current chat/session. Installation, discovery, mentioning the MCP, earlier tool calls, another user's request, and permission in other sessions do not count as consent. Withdrawn consent stops notifications. This matters on shared accounts: never assume every chat belongs to the phone-number owner.
 
 This is a tool the agent must call. It does not independently monitor the agent, detect crashes, or run after a forcibly terminated session. The one-minute inactivity policy is an agent instruction, not a server-side timer: the MCP server cannot read chat activity or wake an agent after its turn ends. A host without those timing and activity capabilities should skip the notification.
+
+Consent and inactivity rules are instructions to the agent, not per-user authorization enforced by the server. All callers using the shared bearer token can invoke the tool. For enforced isolation, configure this MCP only in the phone-number owner's separate local profile; a shared credential cannot identify which person is using it.
 
 ## Connect local Codex
 
