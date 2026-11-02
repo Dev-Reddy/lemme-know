@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { createHandler } from '../src/handler.js';
-import { messageSchema, sendNotification } from '../src/sms.js';
+import { MAX_MESSAGE_LENGTH, SMS_SEGMENT_LIMIT, TRIAL_PREFIX, messageSchema, sendNotification } from '../src/sms.js';
 
 const token = 'test-token-with-at-least-thirty-two-characters';
 async function fixture(t, send, env = { MCP_AUTH_TOKEN: token }) {
@@ -38,7 +38,7 @@ test('real MCP client initializes, lists exactly one tool, and calls it', async 
   const { tools } = await client.listTools();
   assert.deepEqual(tools.map(tool => tool.name), ['notify_agent_done']);
   assert.equal(calls, 0);
-  for (const args of [{}, { message: 'a'.repeat(121) }, { message: 'Finished ✅' }, { message: '   ' }]) {
+  for (const args of [{}, { message: 'a'.repeat(MAX_MESSAGE_LENGTH + 1) }, { message: 'Finished ✅' }, { message: '   ' }]) {
     const invalid = await client.callTool({ name: 'notify_agent_done', arguments: args });
     assert.equal(invalid.isError, true);
     assert.equal(calls, 0);
@@ -68,10 +68,12 @@ test('Twilio errors are sanitized and uncertain sends are never retried', async 
   await assert.rejects(sendNotification('Done.', env, async () => { calls++; throw new Error('sensitive'); }), /delivery is unknown/);
   assert.equal(calls, 1);
 });
-test('message budget accepts 120 single-septet characters and rejects costly encodings', () => {
-  assert.equal(messageSchema.parse('a'.repeat(120)).length, 120);
+test('message plus actual trial prefix fits exactly one segment and rejects overflow', () => {
+  assert.equal(MAX_MESSAGE_LENGTH, 122);
+  const longest = messageSchema.parse('a'.repeat(MAX_MESSAGE_LENGTH));
+  assert.equal((TRIAL_PREFIX + longest).length, SMS_SEGMENT_LIMIT);
   assert.equal(messageSchema.parse('  Ready for you.  '), 'Ready for you.');
-  for (const text of ['a'.repeat(121), 'Done ✅', '“Done”', 'नमस्ते', 'path[0]', 'a\nb', '`code`']) {
+  for (const text of ['a'.repeat(MAX_MESSAGE_LENGTH + 1), 'Done ✅', '“Done”', 'नमस्ते', 'path[0]', 'a\nb', '`code`']) {
     assert.equal(messageSchema.safeParse(text).success, false);
   }
 });

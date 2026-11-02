@@ -1,10 +1,15 @@
 import { z } from 'zod';
 
-// Leave room for Twilio's trial-account prefix. Every allowed character uses
-// one GSM-7 septet; emoji, smart punctuation and extension-table symbols do not.
-export const messageSchema = z.string().trim().min(1).max(120)
+export const SMS_SEGMENT_LIMIT = 160;
+// Confirmed against this account's delivered message body. Reserve this space
+// even after upgrading, so a trial account always stays within one segment.
+export const TRIAL_PREFIX = 'Sent from your Twilio trial account - ';
+export const MAX_MESSAGE_LENGTH = SMS_SEGMENT_LIMIT - TRIAL_PREFIX.length;
+
+// Every allowed character uses one GSM-7 septet.
+export const messageSchema = z.string().trim().min(1).max(MAX_MESSAGE_LENGTH)
   .regex(/^[A-Za-z0-9 .,!?'"():;@#$%&*+=/_-]+$/, 'Use plain English letters, digits and simple punctuation. No emoji, Unicode or brackets.')
-  .describe('Write a short, specific notification explaining what finished or what input is needed. Maximum 120 characters. Plain English only; no emoji, smart quotes, brackets or newlines.');
+  .describe(`Write a short, specific notification explaining what finished or what input is needed. Maximum ${MAX_MESSAGE_LENGTH} characters, leaving room for the trial prefix within one SMS segment. Plain English only; no emoji, smart quotes, brackets or newlines.`);
 
 export async function sendNotification(message, env = process.env, fetchImpl = fetch) {
   const body = messageSchema.parse(message);

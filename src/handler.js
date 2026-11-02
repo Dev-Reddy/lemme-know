@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { messageSchema, sendNotification } from './sms.js';
+import { MAX_MESSAGE_LENGTH, messageSchema, sendNotification } from './sms.js';
 
 export function createHandler({ env = process.env, send = message => sendNotification(message, env) } = {}) {
   return async function handler(req, res) {
@@ -28,7 +28,7 @@ export function createHandler({ env = process.env, send = message => sendNotific
     const server = new McpServer({ name: 'lemme-know', version: '1.0.0' });
     server.registerTool('notify_agent_done', {
       title: 'Notify me by SMS',
-      description: 'Send the owner an SMS you write explaining what finished or why you need attention. Call once at the end of the task, or before pausing for user input, when the user requested notifications. Keep it under 120 plain English characters to minimize SMS charges. Cannot detect a crash or stop automatically. Do not retry an uncertain result without checking Twilio logs.',
+      description: `Send the owner an SMS you write explaining what finished or why you need attention. Call once at the end of the task, or before pausing for user input, when the user requested notifications. Use at most ${MAX_MESSAGE_LENGTH} plain English characters to stay within one SMS segment including the trial prefix. Cannot detect a crash or stop automatically. Do not retry an uncertain result without checking Twilio logs.`,
       inputSchema: { message: messageSchema },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     }, async ({ message }) => {

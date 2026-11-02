@@ -15,7 +15,7 @@ The header value is a secret. On the setup machine, find `MCP_AUTH_TOKEN` in the
 
 Suggested instruction for Claude:
 
-> When you finish this task, or need my input before continuing, call `notify_agent_done` once before your final reply. Write a specific message explaining what finished or what you need, using at most 120 plain English characters. Do not send repeated notifications for the same pause.
+> When you finish this task, or need my input before continuing, call `notify_agent_done` once before your final reply. Write a specific message explaining what finished or what you need, using at most 122 plain English characters. Do not send repeated notifications for the same pause.
 
 This is a tool the agent must call. It does not independently monitor the agent, detect crashes, or run after a forcibly terminated session.
 
@@ -27,7 +27,7 @@ This is a tool the agent must call. It does not independently monitor the agent,
 { "message": "Deployment finished. All tests passed. Ready for your review." }
 ```
 
-Messages must contain 1-120 characters after trimming. Only English letters, digits, spaces and simple single-septet GSM-7 punctuation are allowed. Emoji, smart quotes, brackets, backticks, newlines and non-English scripts are rejected before Twilio is called. This leaves room for the trial prefix while keeping notifications within one SMS segment. Invalid messages return a tool error so the LLM can shorten or rephrase them.
+Messages must contain 1-122 characters after trimming. Only English letters, digits, spaces and simple single-septet GSM-7 punctuation are allowed. Emoji, smart quotes, brackets, backticks, newlines and non-English scripts are rejected before Twilio is called. The account's trial prefix is 38 characters, so 122 characters of LLM text plus that prefix fits exactly within the 160-character single-segment limit. Invalid messages return a tool error so the LLM can shorten or rephrase them.
 
 The recipient and sender cannot be selected by the caller. Successful results include a Twilio message SID and status. A `queued` or `sent` status is not proof of delivery. Check Twilio Messaging logs for final delivery status.
 
