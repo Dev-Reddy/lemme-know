@@ -1,6 +1,13 @@
-export const MESSAGE = 'Lemme Know: Your agent has finished working or needs your attention. It is ready for you.';
+import { z } from 'zod';
 
-export async function sendNotification(env = process.env, fetchImpl = fetch) {
+// Leave room for Twilio's trial-account prefix. Every allowed character uses
+// one GSM-7 septet; emoji, smart punctuation and extension-table symbols do not.
+export const messageSchema = z.string().trim().min(1).max(120)
+  .regex(/^[A-Za-z0-9 .,!?'"():;@#$%&*+=/_-]+$/, 'Use plain English letters, digits and simple punctuation. No emoji, Unicode or brackets.')
+  .describe('Write a short, specific notification explaining what finished or what input is needed. Maximum 120 characters. Plain English only; no emoji, smart quotes, brackets or newlines.');
+
+export async function sendNotification(message, env = process.env, fetchImpl = fetch) {
+  const body = messageSchema.parse(message);
   const keys = ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM_NUMBER', 'TWILIO_TO_NUMBER'];
   if (keys.some(key => !env[key])) throw new Error('SMS service is not configured.');
   if (!/^AC[a-f0-9]{32}$/i.test(env.TWILIO_ACCOUNT_SID) ||
@@ -16,7 +23,7 @@ export async function sendNotification(env = process.env, fetchImpl = fetch) {
         Authorization: `Basic ${Buffer.from(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`).toString('base64')}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({ To: env.TWILIO_TO_NUMBER, From: env.TWILIO_FROM_NUMBER, Body: MESSAGE }),
+      body: new URLSearchParams({ To: env.TWILIO_TO_NUMBER, From: env.TWILIO_FROM_NUMBER, Body: body }),
       signal: AbortSignal.timeout(15000),
     });
   } catch {

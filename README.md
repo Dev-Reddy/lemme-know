@@ -15,17 +15,23 @@ The header value is a secret. On the setup machine, find `MCP_AUTH_TOKEN` in the
 
 Suggested instruction for Claude:
 
-> When you finish this task, or need my input before continuing, call `notify_agent_done` once before your final reply. Do not send repeated notifications for the same pause.
+> When you finish this task, or need my input before continuing, call `notify_agent_done` once before your final reply. Write a specific message explaining what finished or what you need, using at most 120 plain English characters. Do not send repeated notifications for the same pause.
 
 This is a tool the agent must call. It does not independently monitor the agent, detect crashes, or run after a forcibly terminated session.
 
 ## Tool
 
-`notify_agent_done` takes no arguments and sends:
+`notify_agent_done` takes one required `message` argument written by the LLM:
 
-> Lemme Know: Your agent has finished working or needs your attention. It is ready for you.
+```json
+{ "message": "Deployment finished. All tests passed. Ready for your review." }
+```
 
-The recipient, sender, and message cannot be selected by the caller. Successful results include a Twilio message SID and status. A `queued` or `sent` status is not proof of delivery. Check Twilio Messaging logs for final delivery status.
+Messages must contain 1-120 characters after trimming. Only English letters, digits, spaces and simple single-septet GSM-7 punctuation are allowed. Emoji, smart quotes, brackets, backticks, newlines and non-English scripts are rejected before Twilio is called. This leaves room for the trial prefix while keeping notifications within one SMS segment. Invalid messages return a tool error so the LLM can shorten or rephrase them.
+
+The recipient and sender cannot be selected by the caller. Successful results include a Twilio message SID and status. A `queued` or `sent` status is not proof of delivery. Check Twilio Messaging logs for final delivery status.
+
+Twilio bills SMS per segment, not per tool call. Current published outbound pricing for India is $0.0832 per segment (checked November 3, 2026); recent messages on this account were billed at that rate. Long messages and Unicode can increase segment counts. Phone-number rental and other usage can also consume credit. Check your actual Twilio balance and message logs rather than assuming the published rate is your whole bill.
 
 ## Configuration
 
@@ -73,3 +79,5 @@ The endpoint has no global rate limit or deduplication store. Anyone holding the
 - [Official MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
 - [Vercel Node.js Functions](https://vercel.com/docs/functions/runtimes/node-js)
 - [Twilio test credentials](https://www.twilio.com/docs/iam/test-credentials)
+- [Twilio India SMS pricing](https://www.twilio.com/en-us/sms/pricing/in)
+- [SMS character limits and segments](https://www.twilio.com/docs/glossary/what-sms-character-limit)

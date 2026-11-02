@@ -6,5 +6,5 @@ try {
   await client.connect(new StreamableHTTPClientTransport(url, { requestInit: { headers: { Authorization: `Bearer ${process.env.MCP_AUTH_TOKEN}` } } }));
   console.log(JSON.stringify(await client.listTools(), null, 2));
   // Explicit opt-in: normal smoke tests do not send SMS.
-  if (process.argv.includes('--send')) console.log(JSON.stringify(await client.callTool({ name: 'notify_agent_done', arguments: {} }), null, 2));
+  if (process.argv.includes('--send')) console.log(JSON.stringify(await client.callTool({ name: 'notify_agent_done', arguments: { message: 'Lemme Know updated: agents can now write short SMS notifications. Ready for you.' } }), null, 2));
 } finally { await client.close(); }

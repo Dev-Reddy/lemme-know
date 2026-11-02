@@ -1,9 +1,9 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { sendNotification } from './sms.js';
+import { messageSchema, sendNotification } from './sms.js';
 
-export function createHandler({ env = process.env, send = () => sendNotification(env) } = {}) {
+export function createHandler({ env = process.env, send = message => sendNotification(message, env) } = {}) {
   return async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -28,12 +28,12 @@ export function createHandler({ env = process.env, send = () => sendNotification
     const server = new McpServer({ name: 'lemme-know', version: '1.0.0' });
     server.registerTool('notify_agent_done', {
       title: 'Notify me by SMS',
-      description: 'Send the owner a fixed SMS saying the agent is finished or needs attention. Call once at the end of the task, or before pausing for user input, when the user requested notifications. Cannot detect a crash or stop automatically. Do not retry an uncertain result without checking Twilio logs.',
-      inputSchema: {},
+      description: 'Send the owner an SMS you write explaining what finished or why you need attention. Call once at the end of the task, or before pausing for user input, when the user requested notifications. Keep it under 120 plain English characters to minimize SMS charges. Cannot detect a crash or stop automatically. Do not retry an uncertain result without checking Twilio logs.',
+      inputSchema: { message: messageSchema },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
-    }, async () => {
+    }, async ({ message }) => {
       try {
-        const result = await send();
+        const result = await send(message);
         return { content: [{ type: 'text', text: JSON.stringify({ ...result, note: 'Accepted by Twilio; this is not confirmation of handset delivery.' }) }] };
       } catch (error) {
         return { isError: true, content: [{ type: 'text', text: error.message }] };
